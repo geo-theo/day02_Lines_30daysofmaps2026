@@ -1,0 +1,12 @@
+{
+  "name": "day02-transit-lines",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "start:live": "node scripts/serve.mjs --live",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=20" }
+}

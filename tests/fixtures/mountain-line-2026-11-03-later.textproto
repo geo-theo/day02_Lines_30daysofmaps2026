@@ -1,0 +1,140 @@
+header {
+  gtfs_realtime_version: "2.0"
+  incrementality: FULL_DATASET
+  timestamp: 1793695933
+}
+entity {
+  id: "1"
+  vehicle {
+    position {
+      latitude: 46.884117
+      longitude: -114.01038
+      bearing: 296.0
+      speed: 0.0
+    }
+    timestamp: 1793695930
+    vehicle {
+      id: "25715"
+    }
+  }
+}
+entity {
+  id: "2"
+  vehicle {
+    position {
+      latitude: 46.884285
+      longitude: -114.01028
+      bearing: 121.0
+      speed: 0.0
+    }
+    timestamp: 1793695928
+    vehicle {
+      id: "25718"
+    }
+  }
+}
+entity {
+  id: "3"
+  vehicle {
+    position {
+      latitude: 46.88426
+      longitude: -114.0103
+      bearing: 359.0
+      speed: 0.0
+    }
+    timestamp: 1793695931
+    vehicle {
+      id: "23705"
+    }
+  }
+}
+entity {
+  id: "4"
+  vehicle {
+    position {
+      latitude: 46.884224
+      longitude: -114.01015
+      bearing: 359.0
+      speed: 0.0
+    }
+    timestamp: 1793695930
+    vehicle {
+      id: "25709"
+    }
+  }
+}
+entity {
+  id: "5"
+  vehicle {
+    position {
+      latitude: 46.884003
+      longitude: -114.0106
+      bearing: 127.0
+      speed: 0.0
+    }
+    timestamp: 1793695929
+    vehicle {
+      id: "25710"
+    }
+  }
+}
+entity {
+  id: "6"
+  vehicle {
+    position {
+      latitude: 46.884094
+      longitude: -114.01044
+      bearing: 129.0
+      speed: 0.0
+    }
+    timestamp: 1793695928
+    vehicle {
+      id: "21704"
+    }
+  }
+}
+entity {
+  id: "7"
+  vehicle {
+    position {
+      latitude: 46.88386
+      longitude: -114.01061
+      bearing: 359.0
+      speed: 0.0
+    }
+    timestamp: 1793695927
+    vehicle {
+      id: "25711"
+    }
+  }
+}
+entity {
+  id: "8"
+  vehicle {
+    position {
+      latitude: 46.884163
+      longitude: -114.01069
+      bearing: 359.0
+      speed: 0.0
+    }
+    timestamp: 1793695393
+    vehicle {
+      id: "25714"
+    }
+  }
+}
+entity {
+  id: "9"
+  vehicle {
+    position {
+      latitude: 46.884277
+      longitude: -114.01058
+      bearing: 125.0
+      speed: 0.0
+    }
+    timestamp: 1793695928
+    vehicle {
+      id: "25713"
+    }
+  }
+}

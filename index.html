@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="description" content="Explore Missoula's Mountain Line network as a projected geographic map or a schematic transit diagram.">
+    <title>Missoula transit lines</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./src/app.js"></script>
+  </head>
+  <body>
+    <main aria-label="Transit map">
+      <div class="view-controls" role="group" aria-label="Map view">
+        <label><input type="radio" name="map-view" data-view="geographic" aria-controls="map" checked disabled> Geographic</label>
+        <label><input type="radio" name="map-view" data-view="schematic" aria-controls="map" disabled> Schematic</label>
+      </div>
+      <p id="view-status" class="sr-only" role="status" aria-atomic="true"></p>
+      <svg id="map" tabindex="0" role="group" aria-labelledby="map-title map-description">
+        <title id="map-title">Missoula transit routes and stops</title>
+        <desc id="map-description">Drag to pan. Scroll or use plus and minus to zoom. Arrow keys pan; Home or double-click fits all routes.</desc>
+      </svg>
+      <section id="live-panel" aria-label="Hourly Mountain Line bus snapshots" data-state="loading">
+        <p id="live-status" role="status" aria-atomic="true">Bus snapshots: 0</p>
+        <p id="live-updated">Feed updated not supplied | Last received not supplied | Refreshes hourly</p>
+        <p id="live-note" hidden></p>
+        <details id="vehicle-picker">
+          <summary id="vehicle-summary">Vehicle list (0)</summary>
+          <ul id="vehicle-list" aria-label="Reported buses"></ul>
+        </details>
+        <div id="vehicle-detail" hidden>
+          <div class="vehicle-detail-header">
+            <h2 id="vehicle-heading" tabindex="-1">Bus details</h2>
+            <button id="vehicle-close" type="button" aria-label="Close bus details">Close</button>
+          </div>
+          <dl id="vehicle-fields"></dl>
+        </div>
+      </section>
+      <p id="status" role="status">Loading transit map…</p>
+      <noscript>This map requires JavaScript.</noscript>
+    </main>
+  </body>
+</html>

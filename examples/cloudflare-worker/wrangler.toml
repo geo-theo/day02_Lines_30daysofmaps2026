@@ -1,0 +1,7 @@
+name = "mountain-line-vehicles"
+main = "worker.js"
+compatibility_date = "2026-11-03"
+
+[vars]
+# Replace with the origin of your Pages site; omit the repository path.
+ALLOWED_ORIGIN = "https://YOUR-USERNAME.github.io"
