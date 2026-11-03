@@ -220,22 +220,25 @@ function pollingHarness(fetcher, feedConfig = shortPollingConfig) {
 }
 const response = (timestamp, entities = []) => new Response(JSON.stringify({ header: { gtfsRealtimeVersion: '2.0', timestamp }, entity: entities }), { headers: { 'Content-Type': 'application/json' } });
 
-test('production polling fetches immediately then hourly, including after failures and tab visibility changes', async () => {
+for (const [name, feedConfig, interval] of [
+  ['saved snapshot', config, 300_000],
+  ['hourly override', { ...config, refreshMs: 3_600_000 }, 3_600_000],
+]) test(`${name} polling respects its interval after successes, failures and tab visibility changes`, async () => {
   let calls = 0;
   const h = pollingHarness(async () => {
     calls++;
     if (calls === 2) throw new TypeError('Failed to fetch');
     return response(1000 + calls);
-  }, config);
+  }, feedConfig);
   h.feed.start(); await h.advance(0);
   assert.equal(calls, 1);
-  await h.advance(3_599_999);
-  assert.equal(calls, 1, 'A successful fetch must not shorten hourly polling to five minutes');
+  await h.advance(interval - 1);
+  assert.equal(calls, 1, 'A successful fetch must respect the configured interval');
   await h.advance(1);
   assert.equal(calls, 2);
   assert.equal(h.changes.at(-1).phase, 'error');
-  await h.advance(3_599_999);
-  assert.equal(calls, 2, 'A failed fetch must still wait an hour before retrying');
+  await h.advance(interval - 1);
+  assert.equal(calls, 2, 'A failed fetch must not shorten the configured interval');
   h.visibility.hidden = true; h.visibility.change();
   await h.advance(1);
   assert.equal(calls, 2);
@@ -244,7 +247,7 @@ test('production polling fetches immediately then hourly, including after failur
   assert.equal(h.changes.at(-1).phase, 'ready');
   h.visibility.hidden = true; h.visibility.change();
   h.visibility.hidden = false; h.visibility.change(); await h.advance(0);
-  assert.equal(calls, 3, 'Returning to a tab must not fetch again before the next hourly update');
+  assert.equal(calls, 3, 'Returning to a tab must not fetch again before the next scheduled check');
   h.feed.stop();
 });
 

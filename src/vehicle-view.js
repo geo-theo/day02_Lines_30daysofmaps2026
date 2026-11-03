@@ -79,7 +79,7 @@ export function createVehicleView(svg, config, { onDraw, mappingWarning = '', tr
     panel.dataset.state = state.phase === 'error' ? 'error' : isStale ? 'stale' : state.phase;
     const statusText = `Bus snapshots: ${count}`;
     if (status.textContent !== statusText) status.textContent = statusText;
-    updated.textContent = `Feed updated ${timeText(state.timestamp)} | Last received ${timeText(state.receivedAt)} | Refreshes hourly`;
+    updated.textContent = `Feed updated ${timeText(state.timestamp)} | Last received ${timeText(state.receivedAt)} | Hourly snapshots`;
     note.textContent = state.phase === 'error'
       ? `${state.error === 'Failed to fetch' ? 'The request was blocked or the network is unavailable' : state.error}. Retrying automatically. ${count ? `Last known positions remain until ${Math.round(config.hideAfterSeconds / 60)} minutes old.` : 'The route map is still available.'}`
       : mappingWarning;

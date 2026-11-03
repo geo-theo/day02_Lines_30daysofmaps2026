@@ -1,8 +1,6 @@
 // Local development only. Fixed upstream, shared hourly cache, no open proxy.
-import { LIVE_CONFIG } from '../src/live-config.js';
-
 const upstream = 'https://bt.mountainline.com/gtfsrt/vehicles';
-const cacheMs = LIVE_CONFIG.refreshMs;
+const cacheMs = 60 * 60 * 1000;
 let cached, pending, retryAt = 0;
 
 export async function proxyVehicles(response) {

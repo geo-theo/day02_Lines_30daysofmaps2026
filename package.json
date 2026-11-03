@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node scripts/serve.mjs",
     "start:live": "node scripts/serve.mjs --live",
+    "build:pages": "node scripts/build-pages.mjs",
     "test": "node --test"
   },
   "engines": { "node": ">=20" }

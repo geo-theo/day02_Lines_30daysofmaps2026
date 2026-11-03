@@ -11,9 +11,18 @@ Use Node.js 20 or later. No install or build step is needed.
 npm start
 ```
 
-Open <http://127.0.0.1:4173>. This is a static-only server. The default agency
-feed currently fails browser CORS checks; the map shows a feed-unavailable state.
-To see live positions locally, use the optional cached proxy:
+Open <http://127.0.0.1:4173> for the route map. This is a static-only server;
+the default saved feed `./data/vehicles.pb` is generated during the Pages build
+and is not committed in the source tree. To preview the complete published site:
+
+```sh
+npm run build:pages
+npm start
+```
+
+Open <http://127.0.0.1:4173/_site/>. Building makes one request to the agency;
+the generated `_site/` directory contains the map and validated snapshot.
+To access the agency locally without building, use the optional cached proxy:
 
 ```sh
 npm run start:live
@@ -89,7 +98,8 @@ to this app. `fetch(..., { mode: 'no-cors' })` would produce an unreadable opaqu
 response and cannot fix it. Static GTFS ZIP download headers **do** allow CORS;
 that does not imply anything about this separate realtime host.
 
-The application defaults to the binary URL, the standard wire format. It also
+The Pages build downloads the binary URL, the standard wire format; the browser
+defaults to the saved `./data/vehicles.pb` on the same site. It also
 recognizes standard snake_case/camelCase GTFS-Realtime JSON from a configured
 proxy, and the observed debug text grammar. It sniffs the body because the debug
 response has no media type, validates the GTFS header, skips unknown binary
@@ -106,7 +116,7 @@ FULL_DATASET feeds are accepted; differential updates are rejected explicitly.
   The plain HTML detail panel shows ID, route, direction, destination, trip,
   speed, position time and numeric bearing. The status starts with `Bus snapshots:`
   and a count; feed and receipt times are separated by ` | `, followed by
-  `Refreshes hourly` so the snapshot cadence is explicit.
+  `Hourly snapshots` so the snapshot cadence is explicit.
 - Geographic markers always use the reported position projected to EPSG:6514;
   they are never moved onto a road. Schematic matching searches only the assigned
   shape(s), never the nearest unrelated route. Positions farther than 150 meters
@@ -164,22 +174,24 @@ staleness/expiry thresholds, and matching tolerances. `?feed=` overrides only th
 client URL and supports absolute HTTPS or document-relative URLs, including
 repository subpaths. No arbitrary upstream URL is accepted by either proxy.
 
-An initial request runs when a visible page opens, then one request is made at a
-time, one hour after the previous completion. Requests time out after 10 seconds;
-failed requests retry after one hour too. The retry cap never shortens the
+GitHub Actions downloads the agency feed once per scheduled hour. Each browser
+loads the saved snapshot when a visible page opens, then checks it five minutes
+after the previous completion. These browser requests only read GitHub Pages;
+they do not contact the agency. Requests time out after 10 seconds;
+failed reads retry after five minutes too. The retry cap never shortens the
 configured refresh interval. Background tabs schedule no requests; an
 already-running request may finish. Returning to a tab respects the same minimum
-interval/backoff. Multiple tabs are independent; use the cached proxy for public
-deployments with multiple visitors. This is an hourly snapshot view, not continuous
-live tracking or a globally synchronized update at the top of each hour.
+interval/backoff. Multiple tabs independently read the same published snapshot.
+This is an hourly snapshot view; positions represent their reported times.
 
 The panel distinguishes the feed's published time from the local last-received
 time. A successful HTTP response does not reset the age of a vehicle timestamp.
 After 120 seconds, a position is stale and its marker gets a dashed outline;
 after two hours its marker is hidden, while details remain available in the
 list. This retains snapshots between hourly requests without presenting old
-positions as fresh. The hourly proxy cache can add nearly an hour of age at
-receipt, before any delay in the agency's own feed. A missing position timestamp
+positions as fresh. The published snapshot can be nearly an hour old when first
+loaded; scheduled-job delays and the agency's own feed can add further age.
+A missing position timestamp
 uses the feed timestamp with an explicit
 estimated-age note; if both are missing, receipt time bounds retention and the
 position is always marked stale. Unchanged timestamp-less positions retain their
@@ -191,13 +203,47 @@ Errors retain the last successful snapshot subject to those age limits. An empty
 valid snapshot shows “No vehicles currently reported.” The static map does not
 depend on either the feed or trip metadata fetch succeeding.
 
-## GitHub Pages and optional serverless proxy
+## GitHub-only hourly deployment
 
-GitHub Pages serves static files; **it cannot run `scripts/serve.mjs`, proxy this
-feed by itself, or add CORS headers to the agency's response**. See
-[GitHub Pages documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages).
-Deploying the static files alone works, but live tracking will show unavailable
-until the agency enables CORS or a separate HTTPS proxy is configured.
+The default deployment uses `.github/workflows/pages.yml`, with no external
+proxy, credentials to configure, or API keys:
+
+1. Set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**.
+   GitHub Free requires the repository to be public.
+2. Commit and push the workflow and app to `main`. Pushes trigger deployment too.
+3. Use **Actions → Publish hourly bus snapshots → Run workflow** on `main` to
+   trigger an extra refresh or retry a failure.
+
+The schedule is `17 * * * *` (17 minutes past each hour, UTC). A build job runs
+the tests, then `npm run build:pages`. That script fetches the one fixed binary
+agency URL with a 15-second timeout and a 2 MB size guard, validates it using
+the same GTFS-Realtime decoder as the browser, and writes `_site/data/vehicles.pb`
+alongside only the browser assets and static datasets needed by the app.
+Valid empty full snapshots are allowed. HTTP errors, malformed/oversized feeds,
+and differential feeds fail the build. The deploy job runs only after a
+successful build, so failures leave the last deployed site intact, with its
+original timestamps and expiry behavior. The first deployment needs a successful
+download. Tests use fixtures and never contact the agency.
+
+The artifact is published directly through `upload-pages-artifact` and
+`deploy-pages`; the workflow does not commit snapshots or need `contents: write`
+or a personal access token. Pages serves the saved binary file from the same
+origin as the map, so the browser does not need CORS headers from Mountain Line.
+The generated `_site/` directory is ignored by Git and can be previewed locally
+at `/_site/` using `npm start` after a build. The snapshot timestamp remains the
+agency's timestamp; fetching or deploying it does not make an old position fresh.
+
+See [GitHub custom Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
+Scheduled runs can be delayed or dropped. Public-repository schedules are
+automatically disabled after 60 days without repository activity; re-enable them
+in Actions if that happens. See [GitHub schedule events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).
+
+## Optional external proxy
+
+GitHub Pages cannot run `scripts/serve.mjs` or proxy requests at runtime.
+For a separately hosted feed, the existing `?feed=` override or `feedUrl`
+configuration still accepts a CORS-enabled HTTPS proxy. This is an alternative
+to the saved snapshot; the default GitHub-only setup does not require it.
 
 An optional Cloudflare Worker is provided in `examples/cloudflare-worker/`:
 
@@ -210,7 +256,7 @@ An optional Cloudflare Worker is provided in `examples/cloudflare-worker/`:
 3. Set `feedUrl` in `src/live-config.js` to the resulting URL, for example
    `https://mountain-line-vehicles.YOUR-SUBDOMAIN.workers.dev/vehicles`.
    Keep `mappingUrl` document-relative so Pages repository subpaths work.
-4. Publish the project root through Pages, then verify in browser developer tools
+4. Publish the site through the workflow, then verify in browser developer tools
    that the Worker GET succeeds and the returned allow-origin matches the Pages
    origin. Test an outage too; routes must remain interactive.
 

@@ -3,9 +3,10 @@
 Parts 1–4: Missoula transit routes and stops on a completely white background,
 with **Geographic** and **Schematic** views, a reversible animated transition,
 and hourly Mountain Line vehicle snapshots.
-Buildless HTML, CSS, browser JavaScript modules, and SVG; no runtime dependencies,
-CDNs, or basemap tiles. Live tracking uses an optional external feed/proxy;
-the route map remains usable independently of that feed.
+HTML, CSS, browser JavaScript modules, and SVG; no runtime dependencies, CDNs,
+or basemap tiles. GitHub Actions downloads an hourly bus snapshot and publishes
+it with the map on GitHub Pages. No external proxy is needed for deployment;
+the route map remains usable independently of the snapshot.
 
 ## View locally
 
@@ -19,7 +20,12 @@ Open <http://127.0.0.1:4173>. No install or build step is necessary. An existing
 static HTTP server also works; opening `index.html` with `file://` will not work
 because browsers restrict fetching local GeoJSON and JavaScript modules.
 
-For local live tracking, run `npm run start:live` and open
+To preview the same files GitHub Pages publishes, run `npm run build:pages`
+once (this downloads the agency feed), start the server with `npm start`, then
+open <http://127.0.0.1:4173/_site/>. The generated `_site/` directory is ignored
+by Git. The source-root map works without this step, but has no saved snapshot.
+
+For local agency access without building, run `npm run start:live` and open
 <http://127.0.0.1:4173/?feed=./api/vehicles>. This enables the small cached local
 proxy needed because the agency currently sends no realtime CORS headers.
 See [LIVE.md](LIVE.md) for feed observations, matching rules and Pages setup.
@@ -85,11 +91,12 @@ opens its endpoint without an entrance animation.
 Select a bus marker with a pointer or Enter/Space, or use the vehicle list in
 the lower-right panel. Details show vehicle/route/direction, trip/destination when
 available, position time, speed and numeric bearing. The panel distinguishes
-feed time from receipt time and labels the hourly refresh. The first request runs
-on page load, then polling runs hourly while visible and pauses in background
-tabs. Failed requests retry hourly. Positions over two minutes old have dashed
+feed time from receipt time and labels the hourly snapshots. GitHub Actions
+downloads the agency feed hourly. Each browser loads the saved file on page load,
+then checks it every five minutes while visible and pauses in background tabs.
+Failed browser reads retry every five minutes. Positions over two minutes old have dashed
 markers; positions over two hours old remain in the list but disappear from the
-map. Both optional proxies cache snapshots for one hour on demand.
+map. The optional development proxies still cache snapshots for one hour on demand.
 
 Geographic markers use actual reported positions. Schematic markers use projected
 progress on their assigned geographic shape and ordered station anchors, including
@@ -151,13 +158,28 @@ ambiguity, stale/expired positions, marker interpolation and responsible polling
 
 ## GitHub Pages
 
-In the repository's **Settings → Pages**, select **Deploy from a branch**, then
-choose the branch containing these files and **/ (root)**. All asset and data URLs
-are relative, so the site also works under a repository subpath. No build step
-is required. Deployment has not been performed.
+The included `.github/workflows/pages.yml` handles the whole deployment on GitHub:
 
-Both map layouts, live-marker rendering and their transition run in the browser.
-**Live data needs a CORS-enabled HTTPS feed/proxy**: GitHub Pages cannot proxy
-the agency feed itself. Configure `feedUrl` in `src/live-config.js`; an optional
-cached Cloudflare Worker and deployment instructions are in [LIVE.md](LIVE.md).
+1. In the repository's **Settings → Pages → Build and deployment**, set
+   **Source** to **GitHub Actions**. GitHub Free requires a public repository.
+2. Commit and push these files to `main`. The workflow also runs on pushes, so
+   the first deployment does not need to wait for the hourly schedule.
+3. In **Actions → Publish hourly bus snapshots**, check the result. To retry or
+   refresh immediately, choose **Run workflow** on `main`.
+
+The workflow is scheduled for **17 minutes past every hour (UTC)**. It tests the
+app, downloads and validates one agency snapshot, packages the browser assets and
+three static datasets in `_site/`, and deploys that artifact directly to Pages.
+It needs no personal token, external service, or hourly commits to the repository.
+The browser reads `./data/vehicles.pb` from the same site; all URLs work under
+a repository subpath. A download/validation failure fails the build and leaves
+the last deployed site in place. Initial deployment requires a successful fetch.
+
+Scheduled runs can be delayed or dropped, and GitHub disables public-repository
+schedules after 60 days without repository activity. Check the Actions tab if
+snapshots stop advancing. See [GitHub scheduling documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
+and [LIVE.md](LIVE.md) for freshness behavior and optional local/proxy alternatives.
+
+Expected site: <https://geo-theo.github.io/day02_Lines_30daysofmaps2026/>.
+Deployment has not been performed from this workspace.
 
